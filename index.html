@@ -2101,16 +2101,18 @@ function searchBili(name) {
   var kw = encodeURIComponent(pendingName);
   pendingBiliUrl = 'https://search.bilibili.com/all?keyword=' + kw;
   if (isIOS()) {
-    copyKeyword('B站', pendingBiliUrl);
-  } else {
+    copyKeyword('B站');
+  } else if (isMobile()) {
     showModal('📺', '跳转B站搜索',
       '即将搜索「' + pendingName + '」<br><br>' +
       '<small style="color:var(--text-sub)">请确保手机已安装哔哩哔哩App</small>',
       [
-        { text: '📺 打开B站App', cls: 'btn-bili-modal', action: 'openAndroid("bili")' },
+        { text: '📺 打开B站App', cls: 'btn-primary', action: 'openBili()' },
         { text: '取消', cls: 'btn-secondary', action: 'closeModal()' }
       ]
     );
+  } else {
+    window.open(pendingBiliUrl, '_blank');
   }
 }
 
@@ -2119,23 +2121,27 @@ function searchDouyin(name) {
   var kw = encodeURIComponent(pendingName);
   pendingDouyinUrl = 'https://www.douyin.com/search/' + kw;
   if (isIOS()) {
-    copyKeyword('抖音', pendingDouyinUrl);
-  } else {
+    copyKeyword('抖音');
+  } else if (isMobile()) {
     showModal('🎵', '跳转抖音搜索',
       '即将搜索「' + pendingName + '」<br><br>' +
       '<small style="color:var(--text-sub)">请确保手机已安装抖音App</small>',
       [
-        { text: '🎵 打开抖音App', cls: 'btn-douyin-modal', action: 'openAndroid("douyin")' },
+        { text: '🎵 打开抖音App', cls: 'btn-primary', action: 'openDouyin()' },
         { text: '取消', cls: 'btn-secondary', action: 'closeModal()' }
       ]
     );
+  } else {
+    window.open(pendingDouyinUrl, '_blank');
   }
 }
 
 function isIOS() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 }
-
+function isMobile() {
+  return /Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
 function openAndroid(platform) {
   closeModal();
   setTimeout(function() {
