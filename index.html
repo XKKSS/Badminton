@@ -2092,40 +2092,104 @@ function selectMood(mood) {
   });
 }
 
-// 全局变量存储url，避免引号冲突
-var pendingUrl = '';
+var pendingName = '';
+var pendingBiliUrl = '';
+var pendingDouyinUrl = '';
 
 function searchBili(name) {
-  var kw = encodeURIComponent('羽毛球 ' + name + ' 教学');
-  pendingUrl = 'https://search.bilibili.com/all?keyword=' + kw;
-  showModal('📺', '跳转B站搜索',
-    '即将搜索「羽毛球 ' + name + ' 教学」<br><br>' +
-    '<small style="color:var(--text-sub)">跳转后点击手机返回键可回到训练App</small>',
-    [
-      { text: '📺 打开B站', cls: 'btn-bili-modal', action: 'doOpenUrl()' },
-      { text: '取消', cls: 'btn-secondary', action: 'closeModal()' }
-    ]
-  );
+  pendingName = '羽毛球 ' + name + ' 教学';
+  var kw = encodeURIComponent(pendingName);
+  pendingBiliUrl = 'https://search.bilibili.com/all?keyword=' + kw;
+  if (isIOS()) {
+    copyKeyword('B站', pendingBiliUrl);
+  } else {
+    showModal('📺', '跳转B站搜索',
+      '即将搜索「' + pendingName + '」<br><br>' +
+      '<small style="color:var(--text-sub)">请确保手机已安装哔哩哔哩App</small>',
+      [
+        { text: '📺 打开B站App', cls: 'btn-bili-modal', action: 'openAndroid("bili")' },
+        { text: '取消', cls: 'btn-secondary', action: 'closeModal()' }
+      ]
+    );
+  }
 }
 
 function searchDouyin(name) {
-  var kw = encodeURIComponent('羽毛球 ' + name + ' 教学');
-  pendingUrl = 'https://www.douyin.com/search/' + kw;
-  showModal('🎵', '跳转抖音搜索',
-    '即将搜索「羽毛球 ' + name + ' 教学」<br><br>' +
-    '<small style="color:var(--text-sub)">跳转后点击手机返回键可回到训练App</small>',
-    [
-      { text: '🎵 打开抖音', cls: 'btn-douyin-modal', action: 'doOpenUrl()' },
-      { text: '取消', cls: 'btn-secondary', action: 'closeModal()' }
-    ]
-  );
+  pendingName = '羽毛球 ' + name + ' 教学';
+  var kw = encodeURIComponent(pendingName);
+  pendingDouyinUrl = 'https://www.douyin.com/search/' + kw;
+  if (isIOS()) {
+    copyKeyword('抖音', pendingDouyinUrl);
+  } else {
+    showModal('🎵', '跳转抖音搜索',
+      '即将搜索「' + pendingName + '」<br><br>' +
+      '<small style="color:var(--text-sub)">请确保手机已安装抖音App</small>',
+      [
+        { text: '🎵 打开抖音App', cls: 'btn-douyin-modal', action: 'openAndroid("douyin")' },
+        { text: '取消', cls: 'btn-secondary', action: 'closeModal()' }
+      ]
+    );
+  }
 }
 
-function doOpenUrl() {
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+
+function openAndroid(platform) {
   closeModal();
   setTimeout(function() {
-    window.location.href = pendingUrl;
+    var kw = encodeURIComponent(pendingName);
+    if (platform === 'bili') {
+      tryOpenApp('bilibili://search?keyword=' + kw, pendingBiliUrl);
+    } else {
+      tryOpenApp('snssdk1128://search?keyword=' + kw, pendingDouyinUrl);
+    }
   }, 300);
+}
+
+function tryOpenApp(appUrl, webUrl) {
+  var iframe = document.createElement('iframe');
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
+  try { iframe.src = appUrl; } catch(e) {}
+  setTimeout(function() {
+    document.body.removeChild(iframe);
+    window.location.href = webUrl;
+  }, 1500);
+}
+
+function copyKeyword(platform, webUrl) {
+  navigator.clipboard.writeText(pendingName).then(function() {
+    showModal(
+      platform === 'B站' ? '📺' : '🎵',
+      '搜索词已复制！',
+      '<div style="background:var(--primary-bg);padding:12px;border-radius:12px;margin-bottom:12px;">' +
+      '<div style="font-size:14px;font-weight:700;color:var(--primary);">' + pendingName + '</div>' +
+      '</div>' +
+      '<div style="font-size:13px;color:var(--text-sub);line-height:1.8;text-align:left;">' +
+      '① 搜索词已自动复制 ✅<br>' +
+      '② 打开' + platform + 'App<br>' +
+      '③ 点击搜索框长按粘贴<br>' +
+      '④ 搜索即可 🎉' +
+      '</div>',
+      [{ text: '知道了 👍', cls: 'btn-primary', action: 'closeModal()' }]
+    );
+  }).catch(function() {
+    showModal(
+      platform === 'B站' ? '📺' : '🎵',
+      '请手动搜索',
+      '<div style="background:var(--primary-bg);padding:12px;border-radius:12px;margin-bottom:12px;">' +
+      '<div style="font-size:14px;font-weight:700;color:var(--primary);">' + pendingName + '</div>' +
+      '</div>' +
+      '<div style="font-size:13px;color:var(--text-sub);line-height:1.8;text-align:left;">' +
+      '① 打开' + platform + 'App<br>' +
+      '② 搜索框输入以上关键词<br>' +
+      '③ 搜索即可' +
+      '</div>',
+      [{ text: '知道了', cls: 'btn-primary', action: 'closeModal()' }]
+    );
+  });
 }
 
 function completeToday() {
