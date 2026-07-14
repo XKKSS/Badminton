@@ -2092,31 +2092,39 @@ function selectMood(mood) {
   });
 }
 
+// 全局变量存储url，避免引号冲突
+var pendingUrl = '';
+
 function searchBili(name) {
   var kw = encodeURIComponent('羽毛球 ' + name + ' 教学');
-  var url = 'https://search.bilibili.com/all?keyword=' + kw;
-  showModal('📺', '跳转B站搜索', 
-    '即将搜索「羽毛球 ' + name + ' 教学」<br><br>跳转后点击手机左上角返回键可回到训练App', [
-    { text: '打开B站', cls: 'btn-bili-modal', action: 'doOpenUrl("' + url + '")' },
-    { text: '取消', cls: 'btn-secondary', action: 'closeModal()' }
-  ]);
+  pendingUrl = 'https://search.bilibili.com/all?keyword=' + kw;
+  showModal('📺', '跳转B站搜索',
+    '即将搜索「羽毛球 ' + name + ' 教学」<br><br>' +
+    '<small style="color:var(--text-sub)">跳转后点击手机返回键可回到训练App</small>',
+    [
+      { text: '📺 打开B站', cls: 'btn-bili-modal', action: 'doOpenUrl()' },
+      { text: '取消', cls: 'btn-secondary', action: 'closeModal()' }
+    ]
+  );
 }
 
 function searchDouyin(name) {
   var kw = encodeURIComponent('羽毛球 ' + name + ' 教学');
-  var url = 'https://www.douyin.com/search/' + kw;
+  pendingUrl = 'https://www.douyin.com/search/' + kw;
   showModal('🎵', '跳转抖音搜索',
-    '即将搜索「羽毛球 ' + name + ' 教学」<br><br>跳转后点击手机左上角返回键可回到训练App', [
-    { text: '打开抖音', cls: 'btn-douyin-modal', action: 'doOpenUrl("' + url + '")' },
-    { text: '取消', cls: 'btn-secondary', action: 'closeModal()' }
-  ]);
+    '即将搜索「羽毛球 ' + name + ' 教学」<br><br>' +
+    '<small style="color:var(--text-sub)">跳转后点击手机返回键可回到训练App</small>',
+    [
+      { text: '🎵 打开抖音', cls: 'btn-douyin-modal', action: 'doOpenUrl()' },
+      { text: '取消', cls: 'btn-secondary', action: 'closeModal()' }
+    ]
+  );
 }
 
-function doOpenUrl(url) {
+function doOpenUrl() {
   closeModal();
-  // 短暂延迟后跳转，让弹窗先关闭
   setTimeout(function() {
-    window.location.href = url;
+    window.location.href = pendingUrl;
   }, 300);
 }
 
