@@ -879,6 +879,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hira
       <div class="settings-section">
         <div class="settings-section-title"><i class="fas fa-database"></i> 数据管理</div>
         <div class="data-action-item">
+<div class="data-action-item">
+  <div class="data-action-info">
+    <div class="dai-title">☁️ 手动同步</div>
+    <div class="dai-desc">立即从云端同步最新数据</div>
+  </div>
+  <button class="btn btn-primary btn-sm" onclick="manualSync()">
+    <i class="fas fa-sync-alt"></i> 同步
+  </button>
+</div>
           <div class="data-action-info"><div class="dai-title">📤 导出数据</div><div class="dai-desc">导出为JSON文件备份到本地</div></div>
           <button class="btn btn-secondary btn-sm" onclick="exportData()"><i class="fas fa-download"></i> 导出</button>
         </div>
@@ -924,16 +933,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hira
 const SUPABASE_URL = 'https://vuqpwefsdqhphsrgtkol.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tArMaK5vsKENGmWahKGW8g_h8TX0Rgh';
 
-// 修复后的 Supabase API 调用
 const sb = {
-  async req(method, path, body=null, token=null) {
+  async req(method, path, body, token, extraHeaders) {
     const headers = {
       'Content-Type': 'application/json',
       'apikey': SUPABASE_KEY,
-      'Authorization': `Bearer ${token || SUPABASE_KEY}`
+      'Authorization': 'Bearer ' + (token || SUPABASE_KEY)
     };
-    if (method === 'PATCH' || method === 'GET') {
-      headers['Prefer'] = 'return=representation';
+    if (extraHeaders) {
+      Object.keys(extraHeaders).forEach(function(k) {
+        headers[k] = extraHeaders[k];
+      });
     }
     const opts = { method, headers };
     if (body) opts.body = JSON.stringify(body);
@@ -964,15 +974,19 @@ const sb = {
     return this.req('POST', '/auth/v1/token?grant_type=refresh_token', { refresh_token });
   },
   async getData(token, userId) {
-    return this.req('GET', `/rest/v1/user_data?user_id=eq.${userId}&select=data`, null, token);
+    return this.req('GET',
+      '/rest/v1/user_data?user_id=eq.' + userId + '&select=data',
+      null, token);
   },
   async upsertData(token, userId, data) {
-    return this.req('POST', '/rest/v1/user_data?on_conflict=user_id', {
-      user_id: userId, data, updated_at: new Date().toISOString()
-    }, token);
+    return this.req('POST',
+      '/rest/v1/user_data?on_conflict=user_id',
+      { user_id: userId, data: data, updated_at: new Date().toISOString() },
+      token,
+      { 'Prefer': 'resolution=merge-duplicates' }
+    );
   }
 };
-
 /* ============================================================
    DATA
    ============================================================ */
@@ -1048,28 +1062,39 @@ function setSyncStatus(s) {
 }
 
 async function syncToCloud() {
-  if (!authToken||!currentUser) return;
+  if (!authToken || !currentUser) return;
   setSyncStatus('syncing');
   try {
-    const { error } = await sb.upsertData(authToken, currentUser.id, appData);
-    setSyncStatus(error ? 'error' : 'synced');
-    if (!error) saveLocal();
-  } catch(e) { setSyncStatus('error'); }
+    const r = await sb.upsertData(authToken, currentUser.id, appData);
+    if (r.error) {
+      setSyncStatus('error');
+    } else {
+      setSyncStatus('synced');
+      saveLocal();
+    }
+  } catch(e) {
+    setSyncStatus('error');
+  }
 }
 
 async function syncFromCloud() {
-  if (!authToken||!currentUser) return;
+  if (!authToken || !currentUser) return;
   setSyncStatus('syncing');
   try {
-    const { data, error } = await sb.getData(authToken, currentUser.id);
-    if (!error && data && Array.isArray(data) && data.length>0 && data[0].data) {
-      appData = deepMerge(JSON.parse(JSON.stringify(DEFAULT_DATA)), data[0].data);
+    const r = await sb.getData(authToken, currentUser.id);
+    if (!r.error && r.data && Array.isArray(r.data) && r.data.length > 0 && r.data[0].data) {
+      appData = deepMerge(JSON.parse(JSON.stringify(DEFAULT_DATA)), r.data[0].data);
       saveLocal();
-    } else if (!error && (!data || (Array.isArray(data) && data.length===0))) {
+      setSyncStatus('synced');
+    } else if (!r.error && (!r.data || r.data.length === 0)) {
       await sb.upsertData(authToken, currentUser.id, appData);
+      setSyncStatus('synced');
+    } else {
+      setSyncStatus('error');
     }
-    setSyncStatus('synced');
-  } catch(e) { setSyncStatus('error'); }
+  } catch(e) {
+    setSyncStatus('error');
+  }
 }
 
 function scheduleSync() {
