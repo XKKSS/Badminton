@@ -2002,10 +2002,11 @@ function buildItemHTML(item, checked, readonly, todayStr) {
 
   return `<div class="tci-wrap ${checkedClass}" id="${wrapId}">
     <div class="tci-header">
-      <input type="checkbox" class="tci-checkbox" ${checked?'checked':''} ${readonly?'disabled':''}
-        onclick="event.stopPropagation();${readonly?'':``toggleCheck('${item.id}','${todayStr}')``}">
+<input type="checkbox" class="tci-checkbox" ${checked?'checked':''} ${readonly?'disabled':''}
+  onclick="event.stopPropagation();handleCheck('${item.id}','${todayStr}',${readonly})">
+
       <span class="tci-emoji-big">${item.emoji}</span>
-      <div class="tci-info" onclick="${readonly?'':``toggleCheck('${item.id}','${todayStr}')``}" style="cursor:${readonly?'default':'pointer'}">
+     <div class="tci-info" onclick="handleCheck('${item.id}','${todayStr}',${readonly})" style="cursor:${readonly?'default':'pointer'}">
         <div class="tci-name">${item.name}</div>
         <span class="tci-sets-tag">📊 ${item.sets}</span>
       </div>
@@ -2037,7 +2038,10 @@ function toggleExpand(wrapId) {
   const el = document.getElementById(wrapId);
   if (el) el.classList.toggle('expanded');
 }
-
+function handleCheck(itemId, dateStr, readonly) {
+  if (readonly) return;
+  toggleCheck(itemId, dateStr);
+}
 function toggleCheck(itemId, dateStr) {
   if (!appData.todayChecked[dateStr]) appData.todayChecked[dateStr]={};
   appData.todayChecked[dateStr][itemId] = !appData.todayChecked[dateStr][itemId];
@@ -2787,4 +2791,4 @@ if('serviceWorker' in navigator){
 init();
 </script>
 </body>
-</html>
+</html>            
