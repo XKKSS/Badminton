@@ -306,6 +306,41 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hira
 .btn-bili:hover{background:#0090C0;transform:translateY(-1px);box-shadow:0 5px 12px rgba(0,161,214,0.4)}
 .btn-douyin{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);font-size:12px;font-weight:700;cursor:pointer;border:none;transition:var(--transition);background:#161823;color:#fff;box-shadow:0 3px 8px rgba(22,24,35,0.3);font-family:inherit}
 .btn-douyin:hover{background:#000;transform:translateY(-1px);box-shadow:0 5px 12px rgba(22,24,35,0.4)}
+.btn-bili-modal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  background: #00A1D6;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0,161,214,0.3);
+}
+.btn-bili-modal:hover { background: #0090C0; }
+
+.btn-douyin-modal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  background: #161823;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(22,24,35,0.3);
+}
+.btn-douyin-modal:hover { background: #000; }
 .video-search-tip{font-size:10px;color:var(--text-sub);display:flex;align-items:center;gap:4px}
 
 /* TODAY FOOTER */
@@ -2060,13 +2095,29 @@ function selectMood(mood) {
 function searchBili(name) {
   var kw = encodeURIComponent('羽毛球 ' + name + ' 教学');
   var url = 'https://search.bilibili.com/all?keyword=' + kw;
-  window.open(url, '_blank');
+  showModal('📺', '跳转B站搜索', 
+    '即将搜索「羽毛球 ' + name + ' 教学」<br><br>跳转后点击手机左上角返回键可回到训练App', [
+    { text: '打开B站', cls: 'btn-bili-modal', action: 'doOpenUrl("' + url + '")' },
+    { text: '取消', cls: 'btn-secondary', action: 'closeModal()' }
+  ]);
 }
 
 function searchDouyin(name) {
   var kw = encodeURIComponent('羽毛球 ' + name + ' 教学');
   var url = 'https://www.douyin.com/search/' + kw;
-  window.open(url, '_blank');
+  showModal('🎵', '跳转抖音搜索',
+    '即将搜索「羽毛球 ' + name + ' 教学」<br><br>跳转后点击手机左上角返回键可回到训练App', [
+    { text: '打开抖音', cls: 'btn-douyin-modal', action: 'doOpenUrl("' + url + '")' },
+    { text: '取消', cls: 'btn-secondary', action: 'closeModal()' }
+  ]);
+}
+
+function doOpenUrl(url) {
+  closeModal();
+  // 短暂延迟后跳转，让弹窗先关闭
+  setTimeout(function() {
+    window.location.href = url;
+  }, 300);
 }
 
 function completeToday() {
